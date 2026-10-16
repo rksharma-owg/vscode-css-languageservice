@@ -38,12 +38,13 @@ jobs:
       fail-fast: false
       matrix:
         language: [javascript-typescript, actions]
+        revision: [baseline, patch]
     env:
-      TESTED_SHA: ${{ inputs.patch_sha }}
+      TESTED_SHA: ${{ matrix.revision == 'patch' && inputs.patch_sha || inputs.baseline_sha }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: ${{ inputs.patch_sha }}
+          ref: ${{ env.TESTED_SHA }}
           persist-credentials: false
       - name: Verify exact source revision
         run: test "$(git rev-parse HEAD)" = "$TESTED_SHA"
@@ -58,6 +59,6 @@ jobs:
           output: sarif-results
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: codeql-${{ matrix.language }}
+          name: codeql-${{ matrix.language }}-${{ matrix.revision }}
           path: sarif-results/*.sarif
           if-no-files-found: error
